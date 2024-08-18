@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= playerName %> - Welcome to Unlucky
+    </title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.socket.io/socket.io-3.0.5.js"></script>
+    <script src="game.js"></script>
+
+</head>
+
+<body>
+    <div id="game-container">
+        <div>
+            <h3>Welcome to Unlucky - <%= playerName%>
+            </h3>
+            <h4 id="room-id">
+                Room ID: <%= roomID %>
+            </h4>
+
+            <p >Current Player: <a id="currentPlayer">tempPlayerA</a></p>
+            <div>
+                <p>
+                    Starting Number:
+                    <a id="startNum">1</a>
+                    Ending Number:
+                    <a id="endNum">100</a>
+                </p>
+            </div>
+        </div>
+        <div style="display: flex; align-items: flex-start; ">
+            <table id="player-list">
+                <tr>
+                    <th>No.</th>
+                    <th>Name</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>tempPlayerA</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>tempPlayerB</td>
+                </tr>
+            </table>
+            <div id="timer">
+                <h4>Timer count down:</h4>
+                <p>10</p>
+            </div>
+        </div>
+
+        <h6 id="msg"></h6>
+    </div>
+    <div class="pop-up" id="guess-num" style="display: none;">
+        <input type="number" id="guess" placeholder="Guess number">
+        <h4 id="guess-msg"></h4>
+        <button id="sendGuess" onclick="sendGuess()">Send guess</button>
+    </div>
+    <div class="pop-up" id="waiting" style="display: none;">
+        <h4>Waiting for other players to join...</h4>
+        
+        <h5>Share this room ID with your friends to join the game<br><a id="waiting-room-id">Room ID: <%= roomID %></a>
+        </h5>
+
+        <h6> Players in the room: </h6>
+        <table id="player-waiting-list">
+            <tr>
+                <th>Name</th>
+                <th>Ready</th>
+            </tr>
+            <tr>
+                <td>tempPlayerA</td>
+                <td>Yes</td>
+            </tr>
+            <tr>
+                <td>tempPlayerB</td>
+                <td>No</td>
+            </tr>
+        </table>
+
+        <button id="ready" onclick="socket.emit('ready')">Ready</button>
+    </div>
+
+</body>
+
+</html>

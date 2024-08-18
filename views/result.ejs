@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.onload = () => {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    window.location.href = '/';
+                }
+            });
+            const result = document.getElementById('result');
+            const button = document.querySelector('button');
+            button.addEventListener('click', () => {
+                window.location.href = '/';
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div id="result">
+        <h1>Result:</h1>
+
+        <div>
+            <p>The Unlucky number is: <%= unluckyNum %>
+            </p>
+            <p>Who lose this game: <%= loser %>
+            </p>
+            <button type="submit" value="Play again">Play again</button>
+        </div>
+    </div>
+</body>
+
+</html>

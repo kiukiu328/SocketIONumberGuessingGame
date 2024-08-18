@@ -1,0 +1,19 @@
+{
+  "name": "number-guessing-game",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "pm2": "pm2 start server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "nodemon": "^3.1.4",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5"
+  }
+}
