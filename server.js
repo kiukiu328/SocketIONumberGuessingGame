@@ -27,7 +27,6 @@ app.get("/game", (req, res) => {
 var games = {}
 io.on("connection", socket => {
 
-    connectedSocket = Array.from(io.sockets.sockets).map(socket => socket[0]);
     socket.on('set-data', (data) => {
         if (data.roomID != "" && games[data.roomID] === undefined) {
             console.log("Room not found:", data.roomID)
@@ -46,6 +45,7 @@ io.on("connection", socket => {
         socket.join(data.roomID)
         games[data.roomID].addPlayer(new Player(socket))
     })
+
     socket.on('ready', () => {
         games[socket.roomID].setPlayerReady(socket.id)
         io.to(socket.roomID).emit('update-waiting', Object.values(games[socket.roomID].players).map(p => { return { name: p.name, ready: p.ready } }))
@@ -62,7 +62,6 @@ io.on("connection", socket => {
     })
     socket.on('guessNum', (num) => {
         games[socket.roomID].guessNum(num, socket)
-        
     })
 
 })
@@ -75,11 +74,12 @@ class Player {
         socket.emit('roomID', socket.roomID)
     }
 }
-const countDownTime = 100
+const countDownTime = 10
 class Game {
     constructor(roomID) {
         this.roomID = roomID
         this.players = {}
+        this.playersLength = 0
         this.startNum = 1
         this.endNum = 100
         this.countDownTimer = countDownTime
@@ -90,81 +90,111 @@ class Game {
         this.unluckyNum = Math.floor(Math.random() * (99 - 2)) + 2
         console.log(`Unlucky Num: ${this.unluckyNum}`)
     }
+    emitUpdate() {
+        io.to(this.roomID).emit('update', this.countDownTimer, Object.values(this.players).map(p => p.name), this.startNum, this.endNum, this.currentPlayerIndex)
+    }
+    emitWaiting() {
+        io.to(this.roomID).emit('waiting', Object.values(this.players).map(p => { return { name: p.name, ready: p.ready } }), this.roomID)
+    }
     setPlayerReady(playerID) {
         this.players[playerID].ready = true
     }
+
     addPlayer(player) {
         this.players[player.socket.id] = player
+        this.playersLength++
+
         io.to(this.roomID).emit('msg', `${player.name} has joined the room`)
-        io.to(this.roomID).emit('update', this.countDownTimer, Object.values(this.players).map(p => p.name), this.startNum, this.endNum, this.currentPlayerIndex)
+        this.emitUpdate()
+
+        // if the game is not playing, pop up the waiting window
         if (!this.playing) {
-            let temp = Object.values(this.players).map(p => { return { name: p.name, ready: p.ready } })
-            io.to(this.roomID).emit('waiting', temp, this.roomID)
+            this.emitWaiting()
         }
     }
     removePlayer(player) {
+        // remove the player from the game
         console.log("Player Leave: ", player.id)
-        delete this.players[player.id]
         io.to(this.roomID).emit('msg', `${player.name} has left the room`)
-        let playerLength = Object.values(this.players).length
-        if ( playerLength == 0) {
+        delete this.players[player.id]
+        this.playersLength--
+
+        // if the game is not playing, update the waiting window
+        if (!this.playing) {
+            io.to(this.roomID).emit('update-waiting', Object.values(this.players).map(p => { return { name: p.name, ready: p.ready } }))
+        }
+        // if no player left, delete the room
+        else if (this.playersLength == 0) {
             delete games[this.roomID]
-            console.log("Room Deleted: ", this.roomID)
             clearInterval(this.interval)
-        }else if (playerLength == 1) {
-            io.to(this.roomID).emit('waiting', Object.values(this.players).map(p => { return { name: p.name, ready: p.ready } }), this.roomID)
+
+            console.log("Room Deleted: ", this.roomID)
+        }
+        // if only one player left, stop the game
+        else if (this.playersLength == 1) {
+            let player = Object.values(this.players)[0]
+            player.ready = false
             this.playing = false
             clearInterval(this.interval)
+
+            this.emitWaiting()
+            this.emitUpdate()
+
+            console.log("Player Left: ", player.name)
         }
     }
     start() {
-        console.log("Game Start")
         this.playing = true
-        io.to(this.roomID).emit('start-game')
+        this.currentPlayer = this.players[Object.keys(this.players)[this.currentPlayerIndex]]
+        this.interval = setInterval(this.gameLoop.bind(this), 1000)
 
         // pop up the input guess box
-        this.currentPlayer = this.players[Object.keys(this.players)[this.currentPlayerIndex]]
         this.currentPlayer.socket.emit('guessNum')
-        this.interval = setInterval(this.gameLoop.bind(this), 1000)
+        io.to(this.roomID).emit('start-game')
+        console.log("Game Start")
     }
     guessNum(num, socket) {
+        // check if the player is the current player
         if (this.currentPlayer.socket.id != socket.id) {
             return
         }
         num = parseInt(num)
-        if (num > this.startNum && num < this.endNum) {
-            if (num == this.unluckyNum) {
-                let loser = this.players[socket.id].name
-                io.to(this.roomID).emit('result', this.unluckyNum, loser)
-            } else {
-                if (num < this.unluckyNum) {
-                    this.startNum = num
-                }
-                else if (num > this.unluckyNum) {
-                    this.endNum = num
-                }
-                io.to(this.roomID).emit('msg', `Player ${this.players[socket.id].name} guessed ${num}`)
-                this.countDownTimer = countDownTime
-                this.nextPlayer()
-            }
-            io.to(this.roomID).emit('update', this.countDownTimer, Object.values(this.players).map(p => p.name), this.startNum, this.endNum, this.currentPlayerIndex)
-        } else {
-            socket.emit('guess-msg', 'Not a vaild Number')
+        // check if the number is valid
+        if (num <= this.startNum || num >= this.endNum) {
+            socket.emit('msg', 'Not a vaild Number', 'guess-box-msg')
             socket.emit('guessNum')
+            return
         }
+        // check if the number is the unlucky number
+        if (num == this.unluckyNum) {
+            let loser = this.players[socket.id].name
+            io.to(this.roomID).emit('result', this.unluckyNum, loser)
+            return
+        }
+        if (num < this.unluckyNum) {
+            this.startNum = num
+        }
+        else if (num > this.unluckyNum) {
+            this.endNum = num
+        }
+        io.to(this.roomID).emit('msg', `Player ${this.players[socket.id].name} guessed ${num}`)
+        this.emitUpdate()
+
+        this.countDownTimer = countDownTime
+        this.nextPlayer()
     }
     nextPlayer() {
-        this.currentPlayerIndex = ++this.currentPlayerIndex % Object.values(this.players).length
+        this.currentPlayerIndex = ++this.currentPlayerIndex % this.playersLength
         this.currentPlayer = this.players[Object.keys(this.players)[this.currentPlayerIndex]]
         this.currentPlayer.socket.emit('guessNum')
     }
     gameLoop() {
         // broadcast the information to all player
-        io.to(this.roomID).emit('update', this.countDownTimer, Object.values(this.players).map(p =>  p.name), this.startNum, this.endNum, this.currentPlayerIndex)
+        this.emitUpdate()
         // count down
         this.countDownTimer--
         // if timeout kick the user
-        if ( this.countDownTimer <= 0) {
+        if (this.countDownTimer <= 0) {
             this.currentPlayer.socket.emit('timeout')
             this.currentPlayer.socket.disconnect()
             this.countDownTimer = countDownTime

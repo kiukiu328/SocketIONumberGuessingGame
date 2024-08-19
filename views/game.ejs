@@ -9,7 +9,7 @@
         <%= playerName %> - Welcome to Unlucky
     </title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.socket.io/socket.io-3.0.5.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="game.js"></script>
 
 </head>
@@ -53,14 +53,17 @@
                 <p>10</p>
             </div>
         </div>
-
         <h6 id="msg"></h6>
-    </div>
+    </div> <!-- End of the main game container  -->
+
+    
+    <!-- A overlay to show the guess number input -->
     <div class="pop-up" id="guess-num" style="display: none;">
         <input type="number" id="guess" placeholder="Guess number">
-        <h4 id="guess-msg"></h4>
+        <h4 id="guess-box-msg"></h4>
         <button id="sendGuess" onclick="sendGuess()">Send guess</button>
     </div>
+    <!-- A overlay to show the waiting list -->
     <div class="pop-up" id="waiting" style="display: none;">
         <h4>Waiting for other players to join...</h4>
         

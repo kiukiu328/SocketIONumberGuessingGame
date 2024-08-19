@@ -2,13 +2,14 @@ const socket = io()
 socket.on('connect', () => {
     var playerName = localStorage.getItem('playerName') || 'anonymous';
     var roomID = localStorage.getItem('roomID') || '';
+    // create room with empty roomID
     socket.emit('set-data', { playerName: playerName, roomID: roomID })
 })
 socket.on('timeout', () => {
-    window.location.href = "/timeout.html"
+    window.location.href = "./timeout.html"
 })
 socket.on('result', (unluckyNum, loser) => {
-    window.location.href = `/result`+`?unluckyNum=${unluckyNum}&loser=${loser}`
+    window.location.href = `./result` + `?unluckyNum=${unluckyNum}&loser=${loser}`
 })
 socket.on('update', (timer, playerList, startNum, endNum, currentPlayer) => {
     document.querySelector('#timer>p').innerText = timer
@@ -26,12 +27,14 @@ socket.on('update', (timer, playerList, startNum, endNum, currentPlayer) => {
             plyerTable.innerHTML += `<tr><td>${(index + 1)}</td><td>${playerList[i]}</td></tr>`
     }
 })
-socket.on('waiting', (players,roomID) => {
+// pop up the waiting window
+socket.on('waiting', (players, roomID) => {
     document.getElementById('waiting').style.display = 'flex'
     document.getElementById('waiting-room-id').innerText = "Room ID: " + roomID
     updateWaiting(players)
-    
+
 })
+// update the waiting window
 socket.on('update-waiting', (players) => {
     updateWaiting(players)
 })
@@ -42,34 +45,32 @@ function updateWaiting(players) {
         playerList.innerHTML += `<tr><td>${players[i].name}</td> <td>${players[i].ready ? "✔️" : "❌"}</td> </tr>`
     }
 }
-// pop up messaage
-socket.on('msg', (msg) => {
-    console.log(msg)
-    let msgBox = document.getElementById('msg')
-    msgBox.innerText = msg
-    setTimeout(() => { msgBox.innerText = "" }, 3000);
-})
-socket.on('guess-msg', (msg) => {
-    let msgBox = document.getElementById('guess-msg')
+// show a temporary message for 3 seconds
+socket.on('msg', (msg, elementId = 'msg') => {
+    console.log(elementId)
+    let msgBox = document.getElementById(elementId)
     msgBox.innerText = msg
     setTimeout(() => { msgBox.innerText = "" }, 3000);
 })
 
+// pop up the input guess box
 socket.on('guessNum', () => {
     document.getElementById('guess-num').style.display = 'flex'
     document.getElementById('guess').focus()
     document.getElementById('guess').value = ''
 })
+
+// get the roomID from server and save it to local storage
 socket.on('roomID', (result) => {
     localStorage.setItem('roomID', result)
-    document.getElementById('room-id').innerText = "Room ID: " +result
+    document.getElementById('room-id').innerText = "Room ID: " + result
 })
 socket.on('start-game', () => {
     document.getElementById('waiting').style.display = 'none'
 })
 socket.on('room-not-found', () => {
     alert('Room not found')
-    window.location.href = "/"
+    window.location.href = "./"
 })
 
 function sendGuess() {

@@ -20,13 +20,13 @@
 
             document.getElementById('room-id').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    window.location.href = '/game'
+                    window.location.href = './game'
                 }
             })
             document.getElementById('create-room').onclick = () => {
                 localStorage.setItem('roomID', '')
                 console.log('create room')
-                window.location.href = '/game?playerName=' + document.getElementById('playerName').value
+                window.location.href = './game?playerName=' + document.getElementById('playerName').value
             }
             document.getElementById('join-room').onclick = () => {
                 let roomID = document.getElementById('room-id').value
@@ -35,7 +35,7 @@
                     return
                 }
                 localStorage.setItem('roomID',roomID)
-                window.location.href = '/game'
+                window.location.href = './game'
             }
         }
         function UpdateName() {

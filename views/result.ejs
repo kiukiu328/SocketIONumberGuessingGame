@@ -11,13 +11,11 @@
         window.onload = () => {
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    window.location.href = '/';
+                    window.location.href = './';
                 }
             });
-            const result = document.getElementById('result');
-            const button = document.querySelector('button');
-            button.addEventListener('click', () => {
-                window.location.href = '/';
+            document.querySelector('#play-again').addEventListener('click', () => {
+                window.location.href = './';
             });
         }
     </script>
@@ -32,7 +30,7 @@
             </p>
             <p>Who lose this game: <%= loser %>
             </p>
-            <button type="submit" value="Play again">Play again</button>
+            <button id="play-again">Play again</button>
         </div>
     </div>
 </body>
