@@ -1,32 +1,32 @@
+const basePath = "/Game/NumberGuessingGame/"
+
 const express = require('express')
 const app = express()
-const http = require("http").Server(app)
-const io = require("socket.io")(http, { cors: { origin: '*' } })// prevent CORS error
-app.use(express.static("public"))
+const router = express.Router()
+const io = require("socket.io")(app.listen(3000), { cors: { origin: '*' } , path: basePath + "socket.io"})
+app.use(basePath, router)
+
+app.use(basePath, express.static("public"))
 app.set("view engine", "ejs")
-http.listen(6827)
 
 io.on("connect_error", (err) => {
     console.log(`connect_error due to ${err.message}`)
 })
 
-app.get("/", (req, res) => {
+router.get("/", (req, res) => {
     res.render("index")
 })
-app.get("/result", (req, res) => {
+router.get("/result", (req, res) => {
     res.render("result", { unluckyNum: req.query.unluckyNum, loser: req.query.loser })
 })
-app.get("/game", (req, res) => {
+router.get("/game", (req, res) => {
     res.render("game", { playerName: req.query.playerName, roomID: req.query.roomID })
 })
 
 
 
-
-
 var games = {}
 io.on("connection", socket => {
-
     socket.on('set-data', (data) => {
         if (data.roomID != "" && games[data.roomID] === undefined) {
             console.log("Room not found:", data.roomID)
@@ -202,3 +202,5 @@ class Game {
     }
 
 }
+
+

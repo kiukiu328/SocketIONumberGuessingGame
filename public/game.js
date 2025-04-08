@@ -1,4 +1,4 @@
-const socket = io()
+const socket = io( { path: '/Game/NumberGuessingGame/socket.io/' })
 socket.on('connect', () => {
     var playerName = localStorage.getItem('playerName') || 'anonymous';
     var roomID = localStorage.getItem('roomID') || '';
